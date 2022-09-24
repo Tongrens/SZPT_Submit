@@ -197,6 +197,8 @@ class SZPT:
         date = time.strftime("%Y-%m-%d", time.localtime())
         if date in data["CXKSSJ"]:
             print('[-] 今日已经提交！')
+        elif data['SFLS_DISPLAY'] == '是':
+            print('[-] 学生已申请离深')
         else:
             # 获取出校地址及交通工具
             CXLJ_URL = 'https://ehall.szpt.edu.cn/publicappinternet/sys/szptpubxslscxbb/modules/apply/' \
@@ -219,6 +221,9 @@ class SZPT:
             # 构造要提交的数据包
             data['cxljFormData'] = "[{\"MDDXXDZ\":\"%s\",\"CXJTFS\":\"%s\",\"SEQ\":%d}]" % (
                 CXLJ['MDDXXDZ'], CXLJ['CXJTFS'], CXLJ['SEQ'])
+            if not data['SFLS_DISPLAY']:
+                data['SFLS'] = '0'
+                data['SFLS_DISPLAY'] = '否'
             data['ignoreSubTableModify'] = False
             data['CREATE_TIME'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())  # 创建时间
             data['CXKSSJ'] = time.strftime("%Y-%m-%d 00:00:00", time.localtime())

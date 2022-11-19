@@ -143,7 +143,7 @@ class SZPT:
         self.opener.open(request)
 
     def get_userinfo(self):
-        print('[*] 获取用户信息 [*]')
+        print('[*] 获取用户信息')
         url = 'https://ehall.szpt.edu.cn/publicappinternet/sys/emapflow/*default/index/queryUserTasks.do'
         body = 'taskType=ALL_TASK&nodeId=usertask1&appName=szptpubxsgrjkmjxcktb&module=modules&page=apply&action=getA' \
                'pplyData&*order=-CREATE_TIME&pageNumber=1&pageSize=1&'

@@ -7,7 +7,8 @@ SZPT每日健康填报及临时出校脚本
 第三方库：`pip install -r requirements.txt`  
 
 ## 使用方法
-```run.py
+```
+# run.py
 if __name__ == '__main__':
     username = ''   # 学号
     password = ''   # 一网通办密码

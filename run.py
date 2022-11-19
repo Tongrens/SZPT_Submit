@@ -1,16 +1,20 @@
 import re
-import sys
 import json
 import time
 import math
 import base64
 import random
+import string
 import requests
+import datetime
 import urllib.error
 import urllib.parse
 import urllib.request
 import http.cookiejar
+from io import BytesIO
 from Crypto.Cipher import AES
+from PIL import Image, ImageDraw, ImageFont
+from requests_toolbelt import MultipartEncoder
 
 
 class SZPT:
@@ -27,11 +31,13 @@ class SZPT:
     GET_SESSION_URL_1 = 'https://ehall.szpt.edu.cn:443/amp-auth-adapter/login?service=' \
                         'https://ehall.szpt.edu.cn:443/publicappinternet/sys/szptpubxslscxbb' \
                         '/*default/index.do?nodeId=0&taskId=0&processInstanceId=0&instId=0&defId=0&defKey=0'
-    """
     GET_SESSION_URL_2 = 'https://ehall.szpt.edu.cn:443/amp-auth-adapter/login?service=' \
+                        'https://ehall.szpt.edu.cn:443/publicappinternet/sys/szptpubxsgrjkmjxcktb/' \
+                        '*default/index.do?nodeId=0&taskId=0&processInstanceId=0&instId=0&defId=0&defKey=0'
+    GET_SESSION_URL_3 = 'https://ehall.szpt.edu.cn:443/amp-auth-adapter/login?service=' \
                         'https://ehall.szpt.edu.cn:443/publicappinternet/sys/szptpubhsjcqd/' \
                         '*default/index.do?nodeId=0&taskId=0&processInstanceId=0&instId=0&defId=0&defKey=0'
-    """
+
     # 请求头
     header = {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -41,47 +47,48 @@ class SZPT:
         'Host': 'ehall.szpt.edu.cn'}
     header_getinfo = {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/80.0.3987.116 Mobile Safari/537.36',
-    }
+                      'Chrome/80.0.3987.116 Mobile Safari/537.36'}
 
     # 初始化
-    def __init__(self, username, password, flag='11'):
-        self.username = username
-        self.password = password
-        self.flag = flag
-        self.AID, self.AID1, self.AID2 = '', '', ''
+    def __init__(self, xhnum, passwd, rflag='11'):
+        self.username = xhnum
+        self.password = passwd
+        self.flag = rflag
+        self.now_time = datetime.datetime.now()
+        self.dept_name, self.dept_code = None, None
+        self.AID, self.AID1, self.AID2, self.AID3 = '', '', '', ''
+        self.name, self.name1, self.phone, self.phone1, self.bj, self.mktime = '', '', '', '', '', ''
         self.LOGIN_URL = requests.get(self.GET_SESSION_URL, allow_redirects=False).headers['Location']
         self.LOGIN_URL_1 = requests.get(self.GET_SESSION_URL_1, allow_redirects=False).headers['Location']
-        # self.LOGIN_URL_2 = requests.get(self.GET_SESSION_URL_2, allow_redirects=False).headers['Location']
+        self.LOGIN_URL_2 = requests.get(self.GET_SESSION_URL_2, allow_redirects=False).headers['Location']
+        self.LOGIN_URL_3 = requests.get(self.GET_SESSION_URL_3, allow_redirects=False).headers['Location']
         # cookiejar
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 
-    # 生成随机字符串
-    def random_string(self, length):
-        aes_chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678'
-        aes_chars_len = len(aes_chars)
-        restr = ''
-        for i in range(0, length):
-            restr += aes_chars[math.floor(random.random() * aes_chars_len)]
-        return restr
-
-    # 密码AES加密
-    def aes_get_key(self, key, pwd):
-        key = key[0:16].encode('utf-8')
-        iv = self.random_string(16).encode()
-        raw = self.random_string(64) + pwd
-        text_length = len(raw)
-        amount_to_pad = AES.block_size - (text_length % AES.block_size)
-        if amount_to_pad == 0:
-            amount_to_pad = AES.block_size
-        pad = chr(amount_to_pad)
-        tmp = raw + pad * amount_to_pad
-        raw = tmp.encode()
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        return base64.b64encode(cipher.encrypt(raw))
-
     # 登录
     def login(self):
+        # 密码AES加密
+        def aes_get_key(key, pwd):
+            # 生成随机字符串
+            def random_string(length):
+                aes_chars = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678'
+                aes_chars_len = len(aes_chars)
+                restr = ''
+                for i in range(0, length):
+                    restr += aes_chars[math.floor(random.random() * aes_chars_len)]
+                return restr
+            key = key[0:16].encode('utf-8')
+            iv = random_string(16).encode()
+            raw = random_string(64) + pwd
+            text_length = len(raw)
+            amount_to_pad = AES.block_size - (text_length % AES.block_size)
+            if amount_to_pad == 0:
+                amount_to_pad = AES.block_size
+            pad = chr(amount_to_pad)
+            tmp = raw + pad * amount_to_pad
+            raw = tmp.encode()
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            return base64.b64encode(cipher.encrypt(raw))
         # 登录请求
         request = urllib.request.Request(url=self.LOGIN_URL, method='GET')
         response = self.opener.open(request)
@@ -90,7 +97,7 @@ class SZPT:
         lt = re.search('name="lt" value="(.*?)"/>', html, re.S).group(1)
         execution = re.search('name="execution" value="(.*?)"/>', html, re.S).group(1)
         aes_key = re.search('pwdDefaultEncryptSalt = "(.*?)";', html, re.S).group(1)
-        password_aes = self.aes_get_key(aes_key, self.password)
+        password_aes = aes_get_key(aes_key, self.password)
         params = {'username': self.username, 'password': password_aes, 'lt': lt, 'dllt': 'userNamePasswordLogin',
                   'execution': execution, '_eventId': 'submit', 'rmShown': '1'}
         # 登录提交
@@ -102,28 +109,31 @@ class SZPT:
                                          data=urllib.parse.urlencode(params).encode(encoding='UTF-8'))
         response = self.opener.open(request)
         html1 = response.read().decode('utf-8')
-        """
         request = urllib.request.Request(url=self.LOGIN_URL_2, method='POST',
                                          data=urllib.parse.urlencode(params).encode(encoding='UTF-8'))
         response = self.opener.open(request)
         html2 = response.read().decode('utf-8')
-        """
+        request = urllib.request.Request(url=self.LOGIN_URL_3, method='POST',
+                                         data=urllib.parse.urlencode(params).encode(encoding='UTF-8'))
+        response = self.opener.open(request)
+        html3 = response.read().decode('utf-8')
         # 登录判断
         if "USERID='" + self.username + "'" in html:
             self.AID = re.search("APPID='(.*?)';", html, re.S).group(1)
             self.AID1 = re.search("APPID='(.*?)';", html1, re.S).group(1)
-            # self.AID2 = re.search("APPID='(.*?)';", html2, re.S).group(1)
+            self.AID2 = re.search("APPID='(.*?)';", html2, re.S).group(1)
+            self.AID3 = re.search("APPID='(.*?)';", html3, re.S).group(1)
             return 0
         elif "密码有误" in html:
             return 1
         elif html.count("验证码") == 11:
-            return 0   # 2
+            return 0  # 2
         else:
             return 3
 
     # 设置cookies
-    def set_cookies(self, aid, name):
-        params_data = {"APPID": aid, "APPNAME": name}
+    def set_cookies(self, aid, aname):
+        params_data = {"APPID": aid, "APPNAME": aname}
         # 转换成json参数
         params = {'data': json.dumps(params_data)}
         # 更新Cookie: _WEU
@@ -131,6 +141,27 @@ class SZPT:
                                          data=urllib.parse.urlencode(params).encode(encoding='UTF-8'),
                                          method='POST', headers=self.header)  # 获取Cookie: _WEU
         self.opener.open(request)
+
+    def get_userinfo(self):
+        print('[*] 获取用户信息 [*]')
+        url = 'https://ehall.szpt.edu.cn/publicappinternet/sys/emapflow/*default/index/queryUserTasks.do'
+        body = 'taskType=ALL_TASK&nodeId=usertask1&appName=szptpubxsgrjkmjxcktb&module=modules&page=apply&action=getA' \
+               'pplyData&*order=-CREATE_TIME&pageNumber=1&pageSize=1&'
+        header = {'Accept': 'application/json, text/plain, */*'}
+        request = urllib.request.Request(url=url, method='POST', data=body.encode(encoding='UTF-8'), headers=header)
+        data = json.loads(self.opener.open(request).read().decode('utf-8'))
+        self.bj = data['datas']['queryUserTasks']['rows'][0]['BJ']
+        self.dept_code = data['datas']['queryUserTasks']['rows'][0]['DEPT_CODE']
+        self.dept_name = data['datas']['queryUserTasks']['rows'][0]['DEPT_NAME']
+        self.name = data['datas']['queryUserTasks']['rows'][0]['USER_NAME']
+        self.phone = data['datas']['queryUserTasks']['rows'][0]['USER_MOBILE']
+        self.mktime = data['datas']['queryUserTasks']['rows'][0]['CREATE_TIME']
+        self.mktime = datetime.datetime.strptime(self.mktime, '%Y-%m-%d %H:%M:%S')
+        if len(self.name) == 2:
+            self.name1 = self.name[0] + '*'
+        else:
+            self.name1 = self.name[0] + '*' + self.name[-1]
+        self.phone1 = self.phone[0:3] + '****' + self.phone[7:11]
 
     # 提交健康填报
     def send_info(self):
@@ -174,8 +205,9 @@ class SZPT:
                 result_json = json.loads(response.read().decode('utf-8'))
                 if result_json["code"] == "0":
                     print("[+] 填报成功")
-            except:
+            except Exception as e:
                 print('[-] 已填报或需手动更新表单（以往表单数据不可用）')
+                print('错误信息：', e)
 
     # 提交临时出校
     def send_info_1(self):
@@ -201,16 +233,16 @@ class SZPT:
             print('[-] 学生已申请离深')
         else:
             # 获取出校地址及交通工具
-            CXLJ_URL = 'https://ehall.szpt.edu.cn/publicappinternet/sys/szptpubxslscxbb/modules/apply/' \
+            cxlj_url = 'https://ehall.szpt.edu.cn/publicappinternet/sys/szptpubxslscxbb/modules/apply/' \
                        'T_IT_XSLSCXBB_CXLJ_QUERY.do?INFO_WID=%s' % data['WID']
-            request = urllib.request.Request(url=CXLJ_URL, method='POST', headers=self.header_getinfo)
+            request = urllib.request.Request(url=cxlj_url, method='POST', headers=self.header_getinfo)
             response = self.opener.open(request)
-            CXLJ = json.loads(response.read().decode('utf-8'))  # 出行路径
-            CXLJ = CXLJ['datas']['T_IT_XSLSCXBB_CXLJ_QUERY']['rows'][0]
+            cxlj = json.loads(response.read().decode('utf-8'))  # 出行路径
+            cxlj = cxlj['datas']['T_IT_XSLSCXBB_CXLJ_QUERY']['rows'][0]
             # 获取流水号LSH
             request = urllib.request.Request(url=self.GET_LSH, method='POST', headers=self.header_getinfo)
             response = self.opener.open(request)
-            LSH = response.read().decode('utf-8')
+            lsh = response.read().decode('utf-8')
             # 删除多余字段
             temp_dict = ['WID', 'OFFICE_MOBILE', 'SFZSWTGY', 'SFQWQTXQ', 'LXCXLJ', 'ZZCL', 'PROCESSINSTANCEID', 'DEFID',
                          'DEFKEY', 'FLOWSTATUS', 'FLOWSTATUSNAME', 'FLOWSUSPENSION', 'FLOWSUSPENSIONNAME', 'TASKINFO',
@@ -220,7 +252,7 @@ class SZPT:
                 data.pop(i)
             # 构造要提交的数据包
             data['cxljFormData'] = "[{\"MDDXXDZ\":\"%s\",\"CXJTFS\":\"%s\",\"SEQ\":%d}]" % (
-                CXLJ['MDDXXDZ'], CXLJ['CXJTFS'], CXLJ['SEQ'])
+                cxlj['MDDXXDZ'], cxlj['CXJTFS'], cxlj['SEQ'])
             if not data['SFLS_DISPLAY']:
                 data['SFLS'] = '0'
                 data['SFLS_DISPLAY'] = '否'
@@ -229,7 +261,7 @@ class SZPT:
             data['CXKSSJ'] = time.strftime("%Y-%m-%d 00:00:00", time.localtime())
             data['CXJSSJ'] = time.strftime("%Y-%m-%d 23:59:00", time.localtime())
             data['REPORT_DATE'] = time.strftime("%Y-%m-%d", time.localtime())
-            data['LSH'] = LSH
+            data['lsh'] = lsh
             params = {'formData': data, 'sendMessage': 'true', 'id': 'start', 'commandType': 'start',
                       'execute': 'do_start', 'name': '%E6%8F%90%E4%BA%A4', 'nextNodeId': 'endevent1', 'taskId': '',
                       'url': '%2Fsys%2Femapflow%2Ftasks%2FstartFlow.do', 'content': '%E6%8F%90%E4%BA%A4',
@@ -245,9 +277,103 @@ class SZPT:
             else:
                 print('[-] 需手动更新表单，以往表单数据不可用')
 
-    """
-    # 每日核酸签到
+    # 三码填报
     def send_info_2(self):
+        # 上传图片
+        def get_imgs(in_img):
+            uploadimg = 'https://ehall.szpt.edu.cn/publicappinternet/sys/emapcomponent/' \
+                        'file/uploadTempFileAsAttachment.do'
+            # 生成scope
+            random_str = ''.join(random.sample(string.ascii_letters + string.digits, 34))
+            # 构造WebKitFormBoundary
+            fields = {'storeId': 'image', 'scope': random_str, 'fileToken': random_str + '1',
+                      'files[]': ('1.jpg', in_img, 'image/jpeg')}
+            boundary = '----WebKitFormBoundary' + ''.join(random.sample(string.ascii_letters + string.digits, 16))
+            headers_img = {
+                "accept": "application/json, text/javascript, */*; q=0.01",
+                "content-type": "multipart/form-data; boundary=" + boundary,
+                "x-requested-with": "XMLHttpRequest"}
+            m = MultipartEncoder(fields=fields, boundary=boundary)
+            # 提交并返回图片ID
+            self.opener.open(urllib.request.Request(url=uploadimg, data=m, headers=headers_img,
+                                                    method='POST')).read().decode('utf-8')
+            return random_str + '1'
+        print('[*] 三码填报 [*]')
+        self.get_userinfo()
+        # 判断当日是否已提交
+        if self.now_time.strftime("%Y-%m-%d") == self.mktime.strftime("%Y-%m-%d"):
+            print('[-] 今日已经提交！')
+            return
+        # 生成粤康码
+        img = Image.open("img/1model.jpg")
+        draw = ImageDraw.Draw(img)
+        draw.text((349, 162), self.name1, fill="black", font=ImageFont.truetype("simhei.ttf", 35))
+        draw.text((220, 270), self.now_time.strftime('%m-%d 06:00:00'), fill="black",
+                  font=ImageFont.truetype("simhei.ttf", 70))
+        draw.text((145, 1330), self.now_time.strftime('%Y-%m-%d 00:00'), fill="white",
+                  font=ImageFont.truetype("simhei.ttf", 28))
+        # 将PIL转为bytes
+        bimg = BytesIO()
+        img.save(bimg, format='JPEG')
+        bimg = bimg.getvalue()
+        # 生成行程卡
+        img1 = Image.open("img/2model.jpg")
+        draw = ImageDraw.Draw(img1)
+        draw.text((194, 492), self.phone1, fill="black", font=ImageFont.truetype("simhei.ttf", 46))
+        draw.text((130, 580), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 50))
+        draw.text((131, 581), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 50))
+        draw.text((132, 582), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 50))
+        bimg1 = BytesIO()
+        img1.save(bimg1, format='JPEG')
+        bimg1 = bimg1.getvalue()
+        # 生成核酸记录
+        img2 = Image.open("img/3model.jpg")
+        draw = ImageDraw.Draw(img2)
+        draw.text((35, 390), self.name, fill="black", font=ImageFont.truetype("simhei.ttf", 48))
+        draw.text((35, 920), self.name, fill="black", font=ImageFont.truetype("simhei.ttf", 48))
+        draw.text((35, 1450), self.name, fill="black", font=ImageFont.truetype("simhei.ttf", 48))
+        draw.text((360, 485), (self.now_time-datetime.timedelta(days=1)).strftime('%Y-%m-%d 20:19'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 35))
+        draw.text((360, 560), self.now_time.strftime('%Y-%m-%d 03:20'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 35))
+        draw.text((360, 1015), (self.now_time-datetime.timedelta(days=2)).strftime('%Y-%m-%d 20:20'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 35))
+        draw.text((360, 1090), (self.now_time-datetime.timedelta(days=1)).strftime('%Y-%m-%d 03:21'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 35))
+        draw.text((360, 1545), (self.now_time-datetime.timedelta(days=3)).strftime('%Y-%m-%d 20:21'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 35))
+        draw.text((360, 1620), (self.now_time-datetime.timedelta(days=2)).strftime('%Y-%m-%d 03:22'), fill="gray",
+                  font=ImageFont.truetype("simhei.ttf", 35))
+        bimg2 = BytesIO()
+        img2.save(bimg2, format='JPEG')
+        bimg2 = bimg2.getvalue()
+        # 生成提交ID
+        millis = int(round(time.time() * 1000))
+        # URl
+        post_url = 'https://ehall.szpt.edu.cn/publicappinternet/sys/emapflow/tasks/startFlow.do?_=' + str(millis)
+        get_sn = 'https://ehall.szpt.edu.cn/publicappinternet/sys/szptpubxsgrjkmjxcktb/data/getSerialNumber.do'
+        # 构造数据
+        fromdata = {"USER_ID": self.username, "USER_NAME": self.name, "DEPT_NAME": self.dept_name,
+                    "USER_MOBILE": self.phone, "DEPT_CODE": self.dept_code, "BJ": self.bj,
+                    "YKM": get_imgs(bimg), "XCK": get_imgs(bimg1), "HSJCBG": get_imgs(bimg2),
+                    "LSH": self.opener.open(urllib.request.Request(get_sn)).read().decode('utf-8'),
+                    "CREATE_TIME": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        data = {'id': 'start', 'sendMessage': 'true', 'commandType': 'start', 'execute': 'do_start', 'name': '提交',
+                'url': '/sys/emapflow/tasks/startFlow.do', 'nextNodeId': 'usertask2', 'nextAssignees': '20210128',
+                'assigneeAdd': '', 'taskId': '', 'defKey': 'szptpubxsgrjkmjxcktb.xsgrjkmjxcktb', 'formData': fromdata}
+        # 提交
+        res = json.loads(self.opener.open(urllib.request.Request(post_url, data=urllib.parse.urlencode(data).
+                                                                 encode('utf-8'))).read().decode('utf-8'))
+        if res['succeed']:
+            print('[+] 提交成功')
+        else:
+            print('[-] 提交失败')
+
+    # 每日核酸签到
+    def send_info_3(self):
         print('[*] 核酸签到 [*]')
         response = self.opener.open('https://ehall.szpt.edu.cn/publicappinternet/sys/szptpubhsjcqd/hsqd/sign.do')
         data = json.loads(response.read().decode('utf-8'))
@@ -257,7 +383,6 @@ class SZPT:
             print('[-] 今日已经签到！')
         else:
             print('[-] 未知错误')
-    """
 
     # 主入口
     def main(self):
@@ -267,15 +392,16 @@ class SZPT:
             print('[+] 登录成功')
             self.set_cookies(self.AID, 'szptpubxsjkxxbs')
             self.set_cookies(self.AID1, 'szptpubxslscxbb')
-            # self.set_cookies(self.AID2, 'szptpubhsjcqd')
+            self.set_cookies(self.AID2, 'szptpubhsjcqd')
+            self.set_cookies(self.AID3, 'szptpubxsgrjkmjxcktb')
             if self.flag[0] == '1':
                 self.send_info()
             if self.flag[1] == '1':
                 self.send_info_1()
-            """
             if self.flag[2] == '1':
                 self.send_info_2()
-            """
+            if self.flag[3] == '1':
+                self.send_info_3()
         elif login_status == 1:
             print("[-] 登录失败，您的用户名或密码有误")
         elif login_status == 2:
@@ -286,12 +412,8 @@ class SZPT:
 
 
 if __name__ == '__main__':
-    arg = sys.argv
-    if len(arg) != 4:
-        print('[-] 请输入参数')
-        sys.exit()
-    u = arg[1]
-    p = arg[2]
-    f = arg[3]
-    cur = SZPT(u, p, f)
+    username = ''   # 学号
+    password = ''   # 一网通办密码
+    flag = '1111'   # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表打卡，0代表不打卡
+    cur = SZPT(username, password, flag)
     cur.main()

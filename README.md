@@ -1,5 +1,5 @@
 # SZPT_Submit
-SZPT每日健康填报及临时出校脚本  
+SZPT自动填报信息脚本
 基于[IamJankin](https://github.com/IamJankin)的[SZPT_Ehall](https://github.com/IamJankin/SZPT_Ehall)及[SZPT_ATLS](https://github.com/IamJankin/SZPT_ATLS)项目进行整合修改  
 
 ## 环境
@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
 ```
 python run.py
-[*] 21180097 [*]
+[*] 2118000 [*]
 [+] 登录成功
 [*] 健康填报 [*]
 [+] 填报成功

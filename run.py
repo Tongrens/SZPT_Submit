@@ -414,6 +414,6 @@ class SZPT:
 if __name__ == '__main__':
     username = ''   # 学号
     password = ''   # 一网通办密码
-    flag = '1111'   # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表打卡，0代表不打卡
+    flag = '1111'   # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表提交，0代表不提交
     cur = SZPT(username, password, flag)
     cur.main()

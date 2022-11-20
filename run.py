@@ -307,19 +307,19 @@ class SZPT:
         img = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkH3T.jpg', stream=True).content))
         draw = ImageDraw.Draw(img)
         draw.text((349, 162), self.name1, fill="black", font=ImageFont.truetype("simhei.ttf", 35))
-        draw.text((220, 270), self.now_time.strftime('%m-%d 06:00:00'), fill="black",
+        draw.text((220, 270), self.now_time.strftime('%m-%d 05:52:40'), fill="black",
                   font=ImageFont.truetype("simhei.ttf", 70))
-        draw.text((145, 1330), self.now_time.strftime('%Y-%m-%d 00:00'), fill="white",
+        draw.text((145, 1330), self.now_time.strftime('%Y-%m-%d 03:20'), fill="white",
                   font=ImageFont.truetype("simhei.ttf", 28))
         # 生成行程卡
         img1 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkOu4.jpg', stream=True).content))
         draw = ImageDraw.Draw(img1)
         draw.text((194, 492), self.phone1, fill="black", font=ImageFont.truetype("simhei.ttf", 46))
-        draw.text((130, 580), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
+        draw.text((130, 580), self.now_time.strftime('更新于：%Y.%m.%d 05:52:29'), fill="gray",
                   font=ImageFont.truetype("simhei.ttf", 50))
-        draw.text((131, 581), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
+        draw.text((131, 581), self.now_time.strftime('更新于：%Y.%m.%d 05:52:29'), fill="gray",
                   font=ImageFont.truetype("simhei.ttf", 50))
-        draw.text((132, 582), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
+        draw.text((132, 582), self.now_time.strftime('更新于：%Y.%m.%d 05:52:29'), fill="gray",
                   font=ImageFont.truetype("simhei.ttf", 50))
         # 生成核酸记录
         img2 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkXDJ.jpg', stream=True).content))

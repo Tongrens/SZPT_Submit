@@ -389,8 +389,8 @@ class SZPT:
             print('[+] 登录成功')
             self.set_cookies(self.AID, 'szptpubxsjkxxbs')
             self.set_cookies(self.AID1, 'szptpubxslscxbb')
-            self.set_cookies(self.AID2, 'szptpubhsjcqd')
             self.set_cookies(self.AID3, 'szptpubxsgrjkmjxcktb')
+            self.set_cookies(self.AID2, 'szptpubhsjcqd')
             if self.flag[0] == '1':
                 self.send_info()
             if self.flag[1] == '1':

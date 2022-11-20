@@ -276,7 +276,7 @@ class SZPT:
             else:
                 print('[-] 需手动更新表单，以往表单数据不可用')
 
-    # 三码填报
+    # 提交三码填报
     def send_info_2(self):
         # 上传图片
         def get_imgs(in_img):
@@ -304,19 +304,15 @@ class SZPT:
             print('[-] 今日已经提交！')
             return
         # 生成粤康码
-        img = Image.open("img/1model.jpg")
+        img = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkH3T.jpg', stream=True).content))
         draw = ImageDraw.Draw(img)
         draw.text((349, 162), self.name1, fill="black", font=ImageFont.truetype("simhei.ttf", 35))
         draw.text((220, 270), self.now_time.strftime('%m-%d 06:00:00'), fill="black",
                   font=ImageFont.truetype("simhei.ttf", 70))
         draw.text((145, 1330), self.now_time.strftime('%Y-%m-%d 00:00'), fill="white",
                   font=ImageFont.truetype("simhei.ttf", 28))
-        # 将PIL转为bytes
-        bimg = BytesIO()
-        img.save(bimg, format='JPEG')
-        bimg = bimg.getvalue()
         # 生成行程卡
-        img1 = Image.open("img/2model.jpg")
+        img1 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkOu4.jpg', stream=True).content))
         draw = ImageDraw.Draw(img1)
         draw.text((194, 492), self.phone1, fill="black", font=ImageFont.truetype("simhei.ttf", 46))
         draw.text((130, 580), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
@@ -325,11 +321,8 @@ class SZPT:
                   font=ImageFont.truetype("simhei.ttf", 50))
         draw.text((132, 582), self.now_time.strftime('更新于：%Y.%m.%d 06:00:00'), fill="gray",
                   font=ImageFont.truetype("simhei.ttf", 50))
-        bimg1 = BytesIO()
-        img1.save(bimg1, format='JPEG')
-        bimg1 = bimg1.getvalue()
         # 生成核酸记录
-        img2 = Image.open("img/3model.jpg")
+        img2 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkXDJ.jpg', stream=True).content))
         draw = ImageDraw.Draw(img2)
         draw.text((35, 390), self.name, fill="black", font=ImageFont.truetype("simhei.ttf", 48))
         draw.text((35, 920), self.name, fill="black", font=ImageFont.truetype("simhei.ttf", 48))
@@ -346,7 +339,12 @@ class SZPT:
                   font=ImageFont.truetype("simhei.ttf", 35))
         draw.text((360, 1620), (self.now_time-datetime.timedelta(days=2)).strftime('%Y-%m-%d 03:22'), fill="gray",
                   font=ImageFont.truetype("simhei.ttf", 35))
-        bimg2 = BytesIO()
+        # 将PIL转为bytes
+        bimg, bimg1, bimg2 = BytesIO(), BytesIO(), BytesIO()
+        img.save(bimg, format='JPEG')
+        bimg = bimg.getvalue()
+        img1.save(bimg1, format='JPEG')
+        bimg1 = bimg1.getvalue()
         img2.save(bimg2, format='JPEG')
         bimg2 = bimg2.getvalue()
         # 生成提交ID

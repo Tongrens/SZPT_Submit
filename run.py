@@ -216,6 +216,10 @@ class SZPT:
         if 'WID' in data['datas']:
             print('[-] 今日已经填报！')
         else:
+            # 22-11-23表单更新
+            if 'XZZXQ' not in data['datas']:
+                print('[-] 表单已更新，请重新填报！')
+                return
             # update 每日首次提交表单会缺失以下数据
             temp_dict = {
                 "ZSDZ": "", "FSSJ": "", "SSSQ": "", "XSQBDSJ": "", "STYXZK": "",

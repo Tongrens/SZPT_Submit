@@ -295,18 +295,22 @@ class SZPT:
                 self.opener.open(urllib.request.Request(url=recall_url, method='POST', data=urllib.parse.
                                  urlencode(recall_body).encode(encoding='UTF-8'),
                                  headers={'Accept': 'application/json, text/plain, */*'}))
+
             url = 'https://ehall.szpt.edu.cn/publicappinternet/sys/emapflow/*default/index/queryUserTasks.do'
             body = 'taskType=ALL_TASK&nodeId=usertask1&appName=szptpubxsgrjkmjxcktb&module=modules&page=apply&action=' \
                    'getApplyData&*order=-CREATE_TIME&pageNumber=1&pageSize=1&'
             userinfo_data = json.loads(self.opener.open(urllib.request.Request(url=url, method='POST', data=body.
                                        encode(encoding='UTF-8'), headers=self.header)).read().decode('utf-8'))
-            # 判断第一条是否为审核中
-            if userinfo_data['datas']['queryUserTasks']['rows'][0]['FLOWSTATUSNAME'] == "审核中":
-                callbacksend()
-                deletesend()
-            # 判断第一条是否为已撤回
-            elif userinfo_data['datas']['queryUserTasks']['rows'][0]['FLOWSTATUSNAME'] == "已撤回":
-                deletesend()
+            if userinfo_data['datas']['queryUserTasks']['rows'][0]['FLOWSTATUSNAME'] != '已完成':
+                # 判断第一条是否为审核中
+                if userinfo_data['datas']['queryUserTasks']['rows'][0]['FLOWSTATUSNAME'] == "审核中":
+                    callbacksend()
+                    deletesend()
+                # 判断第一条是否为已撤回
+                elif userinfo_data['datas']['queryUserTasks']['rows'][0]['FLOWSTATUSNAME'] == "已撤回":
+                    deletesend()
+                userinfo_data = json.loads(self.opener.open(urllib.request.Request(url=url, method='POST', data=body.
+                                           encode(encoding='UTF-8'), headers=self.header)).read().decode('utf-8'))
             self.bj = userinfo_data['datas']['queryUserTasks']['rows'][0]['BJ']
             self.dept_code = userinfo_data['datas']['queryUserTasks']['rows'][0]['DEPT_CODE']
             self.dept_name = userinfo_data['datas']['queryUserTasks']['rows'][0]['DEPT_NAME']

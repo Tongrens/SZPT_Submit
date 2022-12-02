@@ -358,6 +358,7 @@ class SZPT:
         draw.text((220, 488), self.phone1, fill="black", font=ImageFont.truetype("msyh.ttc", 40))
         draw.text((170, 575), self.now_time.strftime('更新于：%Y.%m.%d %H:%M:24'), fill="gray",
                   font=ImageFont.truetype("msyhbd.ttc", 42))
+        """ # 22-12-02更新：核算记录24h不再需要
         # 生成核酸记录
         img2 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkXDJ.jpg', stream=True).content))
         draw = ImageDraw.Draw(img2)
@@ -376,18 +377,23 @@ class SZPT:
                   font=ImageFont.truetype("msyh.ttc", 26))
         draw.text((430, 1628), (self.now_time - datetime.timedelta(days=2)).strftime('%Y-%m-%d 00:18'), fill="gray",
                   font=ImageFont.truetype("msyh.ttc", 26))
+        """
         # 将PIL转为bytes
-        bimg, bimg1, bimg2 = BytesIO(), BytesIO(), BytesIO()
+        bimg, bimg1 = BytesIO(), BytesIO()
         img.save(bimg, format='JPEG')
         bimg = bimg.getvalue()
         img1.save(bimg1, format='JPEG')
         bimg1 = bimg1.getvalue()
+        """
+        bimg2 = BytesIO()
         img2.save(bimg2, format='JPEG')
         bimg2 = bimg2.getvalue()
+        """
         # 构造数据
         fromdata = {"USER_ID": self.username, "USER_NAME": self.name, "DEPT_NAME": self.dept_name,
                     "USER_MOBILE": self.phone, "DEPT_CODE": self.dept_code, "BJ": self.bj,
-                    "YKM": get_imgs(bimg), "XCK": get_imgs(bimg1), "HSJCBG": get_imgs(bimg2),
+                    "YKM": get_imgs(bimg), "XCK": get_imgs(bimg1),
+                    # "HSJCBG": get_imgs(bimg2),
                     "LSH": self.opener.open(urllib.request.Request(get_lsh)).read().decode('utf-8'),
                     "CREATE_TIME": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         data = {'id': 'start', 'sendMessage': 'true', 'commandType': 'start', 'execute': 'do_start', 'name': '提交',
@@ -430,6 +436,6 @@ class SZPT:
 if __name__ == '__main__':
     username = ''  # 学号
     password = ''  # 一网通办密码
-    flag = '1111'  # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表提交，0代表不提交
+    flag = '1011'  # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表提交，0代表不提交
     cur = SZPT(username, password, flag)
     cur.main()

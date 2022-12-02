@@ -358,7 +358,7 @@ class SZPT:
         draw.text((220, 488), self.phone1, fill="black", font=ImageFont.truetype("msyh.ttc", 40))
         draw.text((170, 575), self.now_time.strftime('更新于：%Y.%m.%d %H:%M:24'), fill="gray",
                   font=ImageFont.truetype("msyhbd.ttc", 42))
-        """ # 22-12-02更新：核算记录24h不再需要
+        """ # 22-12-02更新：核酸记录24h不再需要
         # 生成核酸记录
         img2 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkXDJ.jpg', stream=True).content))
         draw = ImageDraw.Draw(img2)
@@ -384,7 +384,7 @@ class SZPT:
         bimg = bimg.getvalue()
         img1.save(bimg1, format='JPEG')
         bimg1 = bimg1.getvalue()
-        """
+        """ # 同上
         bimg2 = BytesIO()
         img2.save(bimg2, format='JPEG')
         bimg2 = bimg2.getvalue()
@@ -436,6 +436,6 @@ class SZPT:
 if __name__ == '__main__':
     username = ''  # 学号
     password = ''  # 一网通办密码
-    flag = '1011'  # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表提交，0代表不提交
+    flag = '1010'  # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表提交，0代表不提交
     cur = SZPT(username, password, flag)
     cur.main()

@@ -352,12 +352,14 @@ class SZPT:
                   font=ImageFont.truetype("msyh.ttc", 80))
         draw.text((168, 1560), self.now_time.strftime('%Y-%m-%d 02:20'), fill="white",
                   font=ImageFont.truetype("msyh.ttc", 30))
+        """ # 22-12-13更新：行程卡不再需要
         # 生成行程卡
         img1 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkOu4.jpg', stream=True).content))
         draw = ImageDraw.Draw(img1)
         draw.text((220, 488), self.phone1, fill="black", font=ImageFont.truetype("msyh.ttc", 40))
         draw.text((170, 575), self.now_time.strftime('更新于：%Y.%m.%d %H:%M:24'), fill="gray",
                   font=ImageFont.truetype("msyhbd.ttc", 42))
+        """
         """ # 22-12-02更新：核酸记录24h不再需要
         # 生成核酸记录
         img2 = Image.open(BytesIO(requests.get('https://s1.ax1x.com/2022/11/20/zMkXDJ.jpg', stream=True).content))
@@ -379,12 +381,13 @@ class SZPT:
                   font=ImageFont.truetype("msyh.ttc", 26))
         """
         # 将PIL转为bytes
-        bimg, bimg1 = BytesIO(), BytesIO()
+        bimg = BytesIO()
         img.save(bimg, format='JPEG')
         bimg = bimg.getvalue()
+        """ # 同上
+        bimg1 = BytesIO()
         img1.save(bimg1, format='JPEG')
         bimg1 = bimg1.getvalue()
-        """ # 同上
         bimg2 = BytesIO()
         img2.save(bimg2, format='JPEG')
         bimg2 = bimg2.getvalue()
@@ -392,8 +395,8 @@ class SZPT:
         # 构造数据
         fromdata = {"USER_ID": self.username, "USER_NAME": self.name, "DEPT_NAME": self.dept_name,
                     "USER_MOBILE": self.phone, "DEPT_CODE": self.dept_code, "BJ": self.bj,
-                    "YKM": get_imgs(bimg), "XCK": get_imgs(bimg1),
-                    # "HSJCBG": get_imgs(bimg2),
+                    "YKM": get_imgs(bimg),
+                    # "XCK": get_imgs(bimg1), "HSJCBG": get_imgs(bimg2),
                     "LSH": self.opener.open(urllib.request.Request(get_lsh)).read().decode('utf-8'),
                     "CREATE_TIME": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         data = {'id': 'start', 'sendMessage': 'true', 'commandType': 'start', 'execute': 'do_start', 'name': '提交',
@@ -434,8 +437,8 @@ class SZPT:
 
 
 if __name__ == '__main__':
-    username = ''  # 学号
-    password = ''  # 一网通办密码
+    username = '20710416'  # 学号
+    password = 'wjl200629'  # 一网通办密码
     flag = '1010'  # 由4位0&1组成，分别代表健康填报、临时出校、三码填报、核酸签到，每位代表一项，1代表提交，0代表不提交
     cur = SZPT(username, password, flag)
     cur.main()

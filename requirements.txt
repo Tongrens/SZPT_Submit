@@ -1,4 +1,2 @@
-requests-toolbelt==0.10.1
 pycryptodomex==3.15.0
 requests==2.28.1
-Pillow==9.3.0

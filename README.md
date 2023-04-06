@@ -1,6 +1,9 @@
 # SZPT_Submit
 SZPT自动填报信息脚本
 
+## 疫情已结束，不用再申报啦！~
+该脚本不再进行更新~
+
 基于[IamJankin](https://github.com/IamJankin)的[SZPT_Ehall](https://github.com/IamJankin/SZPT_Ehall)及[SZPT_ATLS](https://github.com/IamJankin/SZPT_ATLS)项目进行整合修改  
 
 ## 环境
